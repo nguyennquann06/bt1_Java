@@ -18,9 +18,10 @@ public class EditTaskActivity extends AppCompatActivity {
     private static final String TAG = "EditTaskActivity";
     private EditText editTextTaskName, editTextDescription;
     private Spinner spinnerProject, spinnerUser, spinnerStatus;
-    private Button buttonUpdateTask, buttonDeleteTask; // Thêm buttonDeleteTask
+    private Button buttonUpdateTask, buttonDeleteTask;
     private DatabaseHelper databaseHelper;
     private int taskId;
+    private String userRole;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +34,7 @@ public class EditTaskActivity extends AppCompatActivity {
         spinnerUser = findViewById(R.id.spinnerUser);
         spinnerStatus = findViewById(R.id.spinnerStatus);
         buttonUpdateTask = findViewById(R.id.buttonUpdateTask);
-        buttonDeleteTask = findViewById(R.id.buttonDeleteTask); // Khởi tạo buttonDeleteTask
+        buttonDeleteTask = findViewById(R.id.buttonDeleteTask);
 
         databaseHelper = new DatabaseHelper(this);
 
@@ -43,6 +44,7 @@ public class EditTaskActivity extends AppCompatActivity {
         int projectId = getIntent().getIntExtra("project_id", -1);
         int assignedUserId = getIntent().getIntExtra("assigned_user_id", -1);
         String taskStatus = getIntent().getStringExtra("task_status");
+        userRole = getIntent().getStringExtra("user_role"); // Nhận userRole
 
         editTextTaskName.setText(taskName);
         editTextDescription.setText(taskDescription);
@@ -51,22 +53,44 @@ public class EditTaskActivity extends AppCompatActivity {
         loadUsers(assignedUserId);
         loadStatusOptions(taskStatus);
 
+        // Nếu không phải PM, vô hiệu hóa các trường không được phép chỉnh sửa
+        if (!"PM".equals(userRole)) {
+            editTextTaskName.setEnabled(false);
+            editTextDescription.setEnabled(false);
+            spinnerProject.setEnabled(false);
+            spinnerUser.setEnabled(false);
+            buttonDeleteTask.setVisibility(View.GONE); // Ẩn nút Xóa
+        }
+
         buttonUpdateTask.setOnClickListener(v -> {
-            String updatedTaskName = editTextTaskName.getText().toString().trim();
-            String updatedDescription = editTextDescription.getText().toString().trim();
-            int updatedProjectId = (int) spinnerProject.getSelectedItemId() + 1;
-            int updatedUserId = (int) spinnerUser.getSelectedItemId() + 1;
             String updatedStatus = spinnerStatus.getSelectedItem().toString();
 
-            if (updatedTaskName.isEmpty() || updatedDescription.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
-            } else {
-                boolean result = databaseHelper.updateTask(taskId, updatedTaskName, updatedDescription, updatedProjectId, updatedUserId, updatedStatus);
+            if (!"PM".equals(userRole)) {
+                // Chỉ cập nhật trạng thái cho nhân viên
+                boolean result = databaseHelper.updateTaskStatus(taskId, updatedStatus);
                 if (result) {
-                    Toast.makeText(this, "Cập nhật công việc thành công", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Cập nhật trạng thái thành công", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    Toast.makeText(this, "Cập nhật công việc thất bại", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Cập nhật trạng thái thất bại", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // Cập nhật toàn bộ thông tin cho PM
+                String updatedTaskName = editTextTaskName.getText().toString().trim();
+                String updatedDescription = editTextDescription.getText().toString().trim();
+                int updatedProjectId = (int) spinnerProject.getSelectedItemId() + 1;
+                int updatedUserId = (int) spinnerUser.getSelectedItemId() + 1;
+
+                if (updatedTaskName.isEmpty() || updatedDescription.isEmpty()) {
+                    Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+                } else {
+                    boolean result = databaseHelper.updateTask(taskId, updatedTaskName, updatedDescription, updatedProjectId, updatedUserId, updatedStatus);
+                    if (result) {
+                        Toast.makeText(this, "Cập nhật công việc thành công", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Toast.makeText(this, "Cập nhật công việc thất bại", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });

@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private TextView textViewUserInfo;
     private Button buttonCreateProject, buttonManageTasks;
-    private ListView listViewAllTasks, listViewTasks; // Thêm listViewAllTasks
+    private ListView listViewAllTasks, listViewTasks;
     private DatabaseHelper databaseHelper;
     private User currentUser;
 
@@ -28,11 +28,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Kiểm tra và khởi tạo các view
         textViewUserInfo = findViewById(R.id.textViewUserInfo);
         buttonCreateProject = findViewById(R.id.buttonCreateProject);
         buttonManageTasks = findViewById(R.id.buttonManageTasks);
-        listViewAllTasks = findViewById(R.id.listViewAllTasks); // Khởi tạo listViewAllTasks
+        listViewAllTasks = findViewById(R.id.listViewAllTasks);
         listViewTasks = findViewById(R.id.listViewTasks);
 
         if (textViewUserInfo == null || buttonCreateProject == null || buttonManageTasks == null || listViewTasks == null || listViewAllTasks == null) {
@@ -42,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Khởi tạo DatabaseHelper
         try {
             databaseHelper = new DatabaseHelper(this);
         } catch (Exception e) {
@@ -87,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
             if (userRole.equals("PM")) {
                 buttonCreateProject.setVisibility(View.VISIBLE);
                 buttonManageTasks.setVisibility(View.VISIBLE);
-                listViewAllTasks.setVisibility(View.VISIBLE); // Hiển thị danh sách tất cả công việc
+                listViewAllTasks.setVisibility(View.VISIBLE);
 
                 buttonCreateProject.setOnClickListener(v -> {
                     Intent intent = new Intent(MainActivity.this, CreateProjectActivity.class);
@@ -99,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 });
 
-                loadAllTasksForPM(); // Tải danh sách tất cả công việc
+                loadAllTasksForPM();
             } else {
                 listViewTasks.setVisibility(View.VISIBLE);
                 loadTasksForUser(currentUser.getId());
@@ -130,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("project_id", selectedTask.getProjectId());
                 intent.putExtra("assigned_user_id", selectedTask.getAssignedUserId());
                 intent.putExtra("task_status", selectedTask.getStatus());
+                intent.putExtra("user_role", currentUser.getRole()); // Truyền userRole
                 startActivity(intent);
             });
         } catch (Exception e) {
@@ -159,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("project_id", selectedTask.getProjectId());
                 intent.putExtra("assigned_user_id", selectedTask.getAssignedUserId());
                 intent.putExtra("task_status", selectedTask.getStatus());
+                intent.putExtra("user_role", currentUser.getRole()); // Truyền userRole
                 startActivity(intent);
             });
         } catch (Exception e) {
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if (currentUser != null) {
             if (currentUser.getRole().equals("PM")) {
-                loadAllTasksForPM(); // Cập nhật danh sách công việc khi quay lại
+                loadAllTasksForPM();
             } else {
                 loadTasksForUser(currentUser.getId());
             }
